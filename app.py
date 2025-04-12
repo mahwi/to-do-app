@@ -1,56 +1,50 @@
-import streamlit as st 
+import streamlit as st
 
-# app title
-st.title("To Do List App")
+st.title("📝To-Do App (Add, Edit, Update, Delete)")
 
-# installation session state for tasks
+# Session state initialization
 if "tasks" not in st.session_state:
-	st.session_state.tasks = []
+    st.session_state.tasks = []
 
-# sidebar heading
-st.sidebar.header("Manage Your Task")
+if "edit_index" not in st.session_state:
+    st.session_state.edit_index = None
 
-# text input 
-new_task = st.sidebar.text_input("Add A New Task:", placeholder= "Enter Your Task Here...")
+# Add new task
+st.subheader("➕ Add New Task")
+new_task = st.text_input("Enter task")
 
-if st.sidebar.button("Add Task"):
-	if new_task.strip():
-		st.session_state.tasks.append({"Task": new_task, "Completed":False})
-		st.success("Task Added Successfuliy!")
-	else:
-		st.warning("Task Cannot Be Empty!")
+if st.button("Add Task"):
+    if new_task:
+        st.session_state.tasks.append(new_task)
+        st.success("Task added!")
+    else:
+        st.warning("Please enter something.")
 
- # Display tasks
-st.sidebar.header("Your TO-DO List")
- 
-if not st.session_state.tasks:
-	st.info("No Task added yet start by adding a task from the sidebar!")
+# List of tasks
+st.subheader("📋 Your Tasks")
+
+if st.session_state.tasks:
+    for i, task in enumerate(st.session_state.tasks):
+        col1, col2, col3 = st.columns([6, 1, 1])
+        
+        if st.session_state.edit_index == i:
+            edited_task = col1.text_input("Edit Task", value=task, key=f"edit_{i}")
+            if col2.button("💾", key=f"save_{i}"):
+                if edited_task.strip():
+                    st.session_state.tasks[i] = edited_task
+                    st.session_state.edit_index = None
+                    st.success("Task updated!")
+                    st.rerun()
+            if col3.button("❌", key=f"cancel_{i}"):
+                st.session_state.edit_index = None
+        else:
+            col1.write(f"{i+1}. {task}")
+            if col2.button("✏️", key=f"edit_{i}"):
+                st.session_state.edit_index = i
+                st.rerun()
+            if col3.button("🗑️", key=f"delete_{i}"):
+                st.session_state.tasks.pop(i)
+                st.success("Task deleted!")
+                st.rerun()
 else:
-	for index, task in enumerate(st.session_state.tasks):
-		col1 , col2 , col3 = st.columns([0.7,0.15,0.15])  
-		
-		#mark as completed
-		completed = col1.checkbox(f"**{task['Task']}**",task["Completed"],key=f"check_{index}")
-		if completed != task["Completed"]:
-			st.session_state.tasks[index]["Completed"] = completed
-
-		# Update task
-		if col2.button("Edit",key=f"edit_{index}"):
-			new_task = st.text_input("Edit task", task["Task"], key=f"Edit_{index}")
-			if new_task and st.button("Save", key=f'Save_{index}'):
-				st.session_state.tasks[index]["task"] = new_task
-				st.experimental_rerun()
-
-		 # Delete task
-	if col3.button("Delete",key=f'delete {index}'):
-			del st.session_state.tasks[index]
-			st.rerun()
-
-		# clear all tasks 
-	if st.button("Clear all tasks"):
-			st.session_state.tasks = []
-			st.success("All tasks deleted successfully")  
-
-		# Footer
-st.markdown('---')
-st.caption("Stay organized & productive with this simple TO-DO List App. ")                     
+    st.write("No tasks yet.")
